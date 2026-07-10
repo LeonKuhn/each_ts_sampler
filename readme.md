@@ -1,0 +1,59 @@
+Check the pre-supplied namelist file (`MOM-ML4GPK.1r.nml`) and see if it matches your needs. The meaning of the configuration
+keys is given below.
+
+`each_ts_sampler` expects a default namelist (`default.nml`), which can be created e.g. through a soft link:
+```ln -sf MOM-ML4GPK.1r.nml default.nml```
+
+Relevant config keys:
+- `input_fname_globs`: list of glob patterns for the input files
+- `work_dir`: the working directory, where `each_ts_sampler` will write its output
+
+Before running any code, make sure to load a conda environment, ideally built using the supplied ``env.yml`` file.
+
+#### 1) Create list of variables
+
+In this first step, test files from the global simulation (see config key `input_fname_globs`) are inspected
+to determine which variables are present and will later be sampled.
+
+Run the python file `get_var_list.py`.
+
+Relevant config keys:
+- `fixed_vars`: list of variables that are always extracted
+- `accepted_units`: all variables whose units are in this list are extracted
+- `blacklist`: list of variables that are ignored, even if their units are in `accepted_units`
+
+
+#### 2) Draw joint samples
+
+This is the canonical sampling method. Samples are drawn by accessing the global simulation data at
+random indices.
+
+Joint sampling is executed via slurm job arrays:
+
+```
+sbatch --array=0-11 draw_joint_samples.sh -s 1000000 -d 12m_v9 -o 12m.nc
+```
+
+with the arguments:
+- `-s`: number of samples to draw *per task*
+- `-d`: output subdirectory (within the working directory `work_dir` defined in the namelist file)
+- `-o`: (optional) output file name format
+- `n`: (optional) namelist file, defaults to `n=default.nml`"
+
+
+#### 3) Draw marginal samples
+
+##### 3.1) Producing histograms
+
+First, the histogram of each variable is determined from all files of the global simulation: Open the slurm submission script `extract_hist.sh` and change the variable `NWORKERS` to the number of job array elements you wish to run (e.g. 20). The number must
+match the requested job array size (e.g. 0-19). Then, run the slurm submission script:
+
+```
+sbatch extract_hist.sh
+```
+
+##### 3.2) Drawing samples from the histograms
+
+```
+sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_v9 -o 12m.nc
+```

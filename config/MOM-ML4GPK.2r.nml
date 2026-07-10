@@ -1,0 +1,32 @@
+# general
+input_fname_globs = [
+    "/work/mm0062/b302052/MOM/EXP/MOM-EACH.2r/data/EACH/*_mecca_gp.nc",
+    "/work/mm0062/b302052/MOM/EXP/MOM-EACH.2r/data/EACH/*_jval_gp.nc"
+]
+work_dir = "./MOM-ML4GPK.2r"
+
+# get_var_list.py
+fixed_vars = ["tm1", "p", "lat", "lon", "time"]
+accepted_units = ["mol/mol", "molec/cm3", "1/s"]
+blacklist = ["LRO2", "LROOH", "cair", "J_not in use"]
+
+# draw joint samples
+file_assoc_method = "global_mecca_r2"
+test_var_name = "O3_start"
+
+# for extracting hists
+out_format_gases = "vmr"  # "vmr" or "conc"
+cair_variable_name = "cair"
+n_bins = 250
+ignore_vars = ["lat", "lon", "time"]
+
+# draw marignal samples
+remove_suffix = "_start"
+
+# random_seed
+random_seed = 42
+
+# post processing
+keep_vars = ["cair", "p", "tm1", "lat", "lon", "time"]
+drop_vars = ["sample_nr", "LRO2", "LROOH"]
+
