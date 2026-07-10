@@ -131,14 +131,14 @@ def plot_results(samples, hist, savename=None, variable_units="warning: no units
     l2 = ax.stairs(sample_hist_norm, hist[:, 1], lw=2, color="royalblue", label="marginal samples")
 
     ax.set_ylabel("Probability density")
-    ax.set_xlabel("Mixing ratio [mol mol$^{-1}$]")
+    ax.set_xlabel("Concentration [molec cm$^{-3}$]")
 
     ax.legend(handles=[l1, l2], frameon=False, loc="upper left")
 
-    plt.xlim(1E-16, None)
+    plt.xlim(10**2, None)
     plt.xscale("log")
 
-    plt.title("Marginal probability density of the NO$_2$ mixing ratio", fontweight="bold")
+    plt.title("Marginal probability density of the NO$_2$ concentration", fontweight="bold")
     plt.tight_layout()
 
     if savename is not None:

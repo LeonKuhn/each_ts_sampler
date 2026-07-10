@@ -1,8 +1,11 @@
-Check the pre-supplied namelist file (`MOM-ML4GPK.1r.nml`) and see if it matches your needs. The meaning of the configuration
+Check the pre-supplied namelist file (`MOM-ML4GPK.2r_conc.nml`) and see if it matches your needs. The meaning of the configuration
 keys is given below.
 
 `each_ts_sampler` expects a default namelist (`default.nml`), which can be created e.g. through a soft link:
-```ln -sf MOM-ML4GPK.1r.nml default.nml```
+```
+cd config
+ln -sf MOM-ML4GPK.2r_conc.nml default.nml
+```
 
 Relevant config keys:
 - `input_fname_globs`: list of glob patterns for the input files
@@ -22,7 +25,6 @@ Relevant config keys:
 - `accepted_units`: all variables whose units are in this list are extracted
 - `blacklist`: list of variables that are ignored, even if their units are in `accepted_units`
 
-
 #### 2) Draw joint samples
 
 This is the canonical sampling method. Samples are drawn by accessing the global simulation data at
@@ -31,7 +33,7 @@ random indices.
 Joint sampling is executed via slurm job arrays:
 
 ```
-sbatch --array=0-11 draw_joint_samples.sh -s 1000000 -d 12m_v9 -o 12m.nc
+sbatch --array=0-11 draw_joint_samples.sh -s 1000000 -d 12m_output -o 12m.nc
 ```
 
 with the arguments:
@@ -54,6 +56,14 @@ sbatch extract_hist.sh
 
 ##### 3.2) Drawing samples from the histograms
 
+Afterwards, run
 ```
-sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_v9 -o 12m.nc
+sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_output -o 12m.nc
+```
+
+#### 4) Reproducing paper plot of marginal histograms
+
+The plot is reproduced by running
+```
+python paper/draw_marginal_samples_paper.py -n config/default.nml -s 100000 -d paper_hist -p -g NO2_start 
 ```
