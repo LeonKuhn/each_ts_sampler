@@ -128,7 +128,7 @@ def plot_results(samples, hist, savename=None, variable_units="warning: no units
     bin_edges = hist[:, 1]
     bin_widths = np.diff(bin_edges)
     sample_hist_norm = sample_hist / np.sum(sample_hist * bin_widths)
-    l2 = ax.stairs(sample_hist_norm, hist[:, 1], lw=2, color="royalblue", label="marginal samples")
+    l2 = ax.stairs(sample_hist_norm, hist[:, 1], lw=2, color="royalblue", label="Marginal samples")
 
     ax.set_ylabel("Probability density")
     ax.set_xlabel("Concentration [molec cm$^{-3}$]")
