@@ -6,7 +6,7 @@ These variables are later sampled for the training set assembly.
 
 import xarray as xr
 import argparse
-import tomli
+import tomllib as tomli
 from glob import glob
 import os
 
