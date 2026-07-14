@@ -6,7 +6,12 @@ These variables are later sampled for the training set assembly.
 
 import xarray as xr
 import argparse
-import tomllib as tomli
+
+try:
+    import tomllib # python >= 3.11
+except ModuleNotFoundError:
+    import tomli as tomllib # python < 3.11
+
 from glob import glob
 import os
 
@@ -20,7 +25,7 @@ namelist = args.namelist
 print(f"Using namelist: {namelist}")
 
 with open(args.namelist, "rb") as f:
-    toml_cfg = tomli.load(f)
+    toml_cfg = tomllib.load(f)
     cfg = {**vars(args), **toml_cfg}
 
 

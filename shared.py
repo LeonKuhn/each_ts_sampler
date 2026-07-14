@@ -31,7 +31,6 @@ def get_var(ds, var, cfg=None):
     broadcast_example_var = "NO2_start" # for broadcasting of variables like latitude or time
 
     if var == "p":
-        #da = ds["ap"] + ds["aps"] * ds["b"]
         da = ds["hyam"] + ds["aps"] * ds["hybm"]
         units = "Pa"
 
@@ -50,11 +49,6 @@ def get_var(ds, var, cfg=None):
         da = ds.time
         units = ""
         da = da.broadcast_like(ds[broadcast_example_var])
-
-    elif var == "geopot":
-        da = ds.geopot
-        units = "" # TODO fill in
-        da = da.broadcast_like(ds[broadcast_example_var]) # TODO is this required?
 
     elif var in ds.variables:  # case 1: var exists in the dataset
 
