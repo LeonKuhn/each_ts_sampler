@@ -15,16 +15,16 @@ except ModuleNotFoundError:
 from glob import glob
 import os
 
-# parse namelist
+# parse toml
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--namelist", default="default.nml", type=str, help="namelist file")
+parser.add_argument("-t", "--toml", default="default.toml", type=str, help="toml file")
 args = parser.parse_args()
 
-namelist = args.namelist
+toml = args.toml
 
-print(f"Using namelist: {namelist}")
+print(f"Using toml: {toml}")
 
-with open(args.namelist, "rb") as f:
+with open(args.toml, "rb") as f:
     toml_cfg = tomllib.load(f)
     cfg = {**vars(args), **toml_cfg}
 

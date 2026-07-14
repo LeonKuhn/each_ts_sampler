@@ -3,9 +3,9 @@
 
 # -P = total number of processors
 # TESTRUN:
-# python3 -u draw_joint_samples.py -n cluster.toml -P 1 -p 0 -s 1000 -d test4
+# python3 -u draw_joint_samples.py -t cluster.toml -P 1 -p 0 -s 1000 -d test4
 # REAL RUN:
-# python3 -u draw_joint_samples.py -n cluster.toml -P ? -p ? -s 10000000 -d clustered
+# python3 -u draw_joint_samples.py -t cluster.toml -P ? -p ? -s 10000000 -d clustered
 # (here, P and p come from draw_joint_samples.sh)
 
 # https://hdbscan.readthedocs.io/en/latest/basic_hdbscan.html

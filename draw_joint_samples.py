@@ -134,9 +134,9 @@ print(f'python version: {sys.version_info}')
 print(f'xarray version: {xr.__version__}')
 print(f'numpy  version: {np.__version__}\n')
 
-# parse arguments and namelist
+# parse arguments and toml
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--namelist", type=str, help="namelist file", default="default.nml")
+parser.add_argument("-t", "--toml", type=str, help="toml file", default="default.toml")
 parser.add_argument("-s", "--nr_samples", type=int, help="number of total samples to draw", required=True)
 parser.add_argument("-d", "--output_dir", type=str, help="output directory (e.g. 100k)", required=True)
 parser.add_argument("-o", "--output_name", type=str, help="output name, appended to output_dir", default="")
@@ -148,7 +148,7 @@ args = parser.parse_args()
 if args.output_name=="":
     args.output_name = args.output_dir + ".nc"
 
-with open(args.namelist, "rb") as f:
+with open(args.toml, "rb") as f:
     cfg = {**vars(args), **tomllib.load(f)}
 
 cfg["clustering"] = cfg.get("clustering") # set to False if undefined
@@ -240,7 +240,7 @@ for i_file, fname in enumerate(all_fnames):
         for i_var, var in enumerate(variables, start=1):
 
             print(f"[var {i_var}/{len(variables)}] [file {i_file_unskipped}/{total_files_to_be_sampled}] {var}")
-            # remove suffix as specified in namelist.input
+            # remove suffix as specified in toml file:
             var_name_nosuffix = var.split(cfg["remove_suffix"])[0]
             da, units = get_var(ds, var, cfg)
             units = "" if units is None else units

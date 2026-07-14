@@ -11,9 +11,9 @@
 #SBATCH --cpus-per-task=1
 
 # parse arguments:
-while getopts ":n:s:d:o:" opt; do
+while getopts ":t:s:d:o:" opt; do
   case $opt in
-    n) NAMELIST="$OPTARG" ;;
+    t) TOML="$OPTARG" ;;
     s) N_SAMPLES="$OPTARG" ;;
     d) OUTPUT_DIR="$OPTARG" ;;
     o) OUTPUT_FILENAME="$OPTARG" ;;
@@ -31,7 +31,7 @@ CMD=(python -u draw_marginal_samples.py
      -d "$OUTPUT_DIR"
      -o "$OUTPUT_FILENAME_FINAL")
 
-[ -n "$NAMELIST" ] && CMD+=(-n "$NAMELIST")
+[ -t "$TOML" ] && CMD+=(-t "$TOML")
 
 echo "Running command:" "${CMD[@]}"
 "${CMD[@]}"
