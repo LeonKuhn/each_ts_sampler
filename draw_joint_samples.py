@@ -149,20 +149,15 @@ with open(args.toml, "rb") as f:
 
 cfg["clustering"] = cfg.get("clustering") # set to False if undefined
 
-cfg["output_name"] = f"{args.output_dir}_{args.processor_index+1:02d}.nc"
+# Define output_name based on short version of output_dir:
+cfg["output_name"] = f"{args.output_dir}_{args.processor_index+1:02d}"
+# Now add full path to output_dir:
 cfg["output_dir"] = os.path.join(cfg["work_dir"], "joint_samples", cfg["output_dir"])
-
-# Print configuration:
-for key, value in cfg.items():
-    print(f'{key}: {value}')
-
 os.makedirs(cfg["output_dir"], exist_ok=True)
-savename = os.path.join(cfg["output_dir"], cfg['output_name'])
-# Apparently the output file must be deleted, if it already exists under
-# the same name; else there might be Error 13s (permission denied)
-if os.path.exists(savename):
-    os.remove(savename)
-print(f'Output nc file will be: {savename}')
+
+print('Configuration:')
+for key, value in cfg.items():
+    print(f'{key:26}: {value}')
 
 # get all relevant filenames to process
 all_fnames = sorted(glob(cfg["input_fname_globs"][0])) # 0 means only mecca, not jval
@@ -192,11 +187,9 @@ for i_file, fname in enumerate(all_fnames):
     if i_file not in processor_fileindex_samplenumbers[args.processor_index]:
         print(f"skipping file {fname}, no samples to be drawn for this processor")
         continue
-    
-    print(f'i_file               = {i_file}')
 
     fnames = find_matching_files(fname, cfg["file_assoc_method"], cfg["input_fname_globs"])
-    print(f"Opening file '{fname}'")
+    print(f"Opening file '{fname}' (i_file={i_file})")
 
     # Build the full dataset belonging to one file index (i.e. combine trace gases, J-values, etc.)
     ds_list = []
@@ -219,11 +212,14 @@ for i_file, fname in enumerate(all_fnames):
         # each fname within the loop over all_fnames:
         ds = ds.assign_coords(sample_nr=range(ds.sizes["sample_nr"]))
         ds["time"].attrs.pop("units", None)
-        # Apparently the output file must be deleted, if it already
-        # exists under the same name; else there might be Error 13s
-        # (permission denied)
+
+        # For clustering, a separate file is written for each i_file:
+        savename = os.path.join(cfg["output_dir"], f'{cfg["output_name"]}_{i_file}.nc')
+        if os.path.exists(savename):
+            os.remove(savename)
         print(f"Saving to file {savename}")
         ds.to_netcdf(savename, unlimited_dims={'sample_nr': True})
+
         # cleanup before creating next xarray dataset:
         del ds
         gc.collect() # gc = garbage collection
@@ -281,5 +277,9 @@ if (not cfg["clustering"]):
     ds = ds.assign_coords(sample_nr=range(ds.sizes["sample_nr"]))
     ds["time"].attrs.pop("units", None)
 
+    savename = os.path.join(cfg["output_dir"], cfg["output_name"]+".nc")
+    # apparently the output file must be deleted, if it already exists under the same name; else there might be Error 13s (permission denied)
+    if os.path.exists(savename):
+        os.remove(savename)
     print(f"Saving to file {savename}")
     ds.to_netcdf(savename, unlimited_dims={'sample_nr': True})
