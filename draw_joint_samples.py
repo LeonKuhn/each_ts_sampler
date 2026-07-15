@@ -139,22 +139,30 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--toml", type=str, help="toml file", default="default.toml")
 parser.add_argument("-s", "--nr_samples", type=int, help="number of total samples to draw", required=True)
 parser.add_argument("-d", "--output_dir", type=str, help="output directory (e.g. 100k)", required=True)
-parser.add_argument("-o", "--output_name", type=str, help="output name, appended to output_dir", default="")
 parser.add_argument("-P", "--number_total_processors", type=int, help="number of total processors", required=True)
 parser.add_argument("-p", "--processor_index", type=int, help="processor index", required=True)
 
 args = parser.parse_args()
-
-if args.output_name=="":
-    args.output_name = args.output_dir + ".nc"
 
 with open(args.toml, "rb") as f:
     cfg = {**vars(args), **tomllib.load(f)}
 
 cfg["clustering"] = cfg.get("clustering") # set to False if undefined
 
+cfg["output_name"] = f"{args.output_dir}_{args.processor_index+1:02d}.nc"
 cfg["output_dir"] = os.path.join(cfg["work_dir"], "joint_samples", cfg["output_dir"])
+
+# Print configuration:
+for key, value in cfg.items():
+    print(f'{key}: {value}')
+
 os.makedirs(cfg["output_dir"], exist_ok=True)
+savename = os.path.join(cfg["output_dir"], cfg['output_name'])
+# Apparently the output file must be deleted, if it already exists under
+# the same name; else there might be Error 13s (permission denied)
+if os.path.exists(savename):
+    os.remove(savename)
+print(f'Output nc file will be: {savename}')
 
 # get all relevant filenames to process
 all_fnames = sorted(glob(cfg["input_fname_globs"][0])) # 0 means only mecca, not jval
@@ -185,11 +193,7 @@ for i_file, fname in enumerate(all_fnames):
         print(f"skipping file {fname}, no samples to be drawn for this processor")
         continue
     
-    print(f'cfg["output_dir"]    = {cfg["output_dir"]}')
-    print(f'cfg["output_name"]   = {cfg["output_name"]}')
     print(f'i_file               = {i_file}')
-    savename = os.path.join(cfg["output_dir"], f'{Path(cfg["output_name"]).stem}.nc')
-    print(f'Output nc file will be: {savename}')
 
     fnames = find_matching_files(fname, cfg["file_assoc_method"], cfg["input_fname_globs"])
     print(f"Opening file '{fname}'")
@@ -218,8 +222,6 @@ for i_file, fname in enumerate(all_fnames):
         # Apparently the output file must be deleted, if it already
         # exists under the same name; else there might be Error 13s
         # (permission denied)
-        if os.path.exists(savename):
-            os.remove(savename)
         print(f"Saving to file {savename}")
         ds.to_netcdf(savename, unlimited_dims={'sample_nr': True})
         # cleanup before creating next xarray dataset:
@@ -278,12 +280,6 @@ if (not cfg["clustering"]):
     ds = ds.isel(sample_nr=range(cfg["nr_samples"]))
     ds = ds.assign_coords(sample_nr=range(ds.sizes["sample_nr"]))
     ds["time"].attrs.pop("units", None)
-
-    savename = os.path.join(cfg["output_dir"], Path(cfg['output_name']).stem + ".nc")
-
-    # apparently the output file must be deleted, if it already exists under the same name; else there might be Error 13s (permission denied)
-    if os.path.exists(savename):
-        os.remove(savename)
 
     print(f"Saving to file {savename}")
     ds.to_netcdf(savename, unlimited_dims={'sample_nr': True})
