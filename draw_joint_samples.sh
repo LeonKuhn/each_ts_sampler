@@ -28,7 +28,7 @@ CMD=(python -u draw_joint_samples.py
      -p "$SLURM_ARRAY_TASK_ID"
      -P "$SLURM_ARRAY_TASK_COUNT")
 
-[ -t "$TOML" ] && CMD+=(-t "$TOML")
+[ -n "$TOML" ] && CMD+=(-t "$TOML")
 
 echo "Running command:" "${CMD[@]}"
 "${CMD[@]}"

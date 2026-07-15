@@ -31,7 +31,7 @@ CMD=(python -u draw_marginal_samples.py
      -d "$OUTPUT_DIR"
      -o "$OUTPUT_FILENAME_FINAL")
 
-[ -t "$TOML" ] && CMD+=(-t "$TOML")
+[ -n "$TOML" ] && CMD+=(-t "$TOML")
 
 echo "Running command:" "${CMD[@]}"
 "${CMD[@]}"

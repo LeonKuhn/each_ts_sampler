@@ -161,7 +161,7 @@ for key, value in cfg.items():
 
 # get all relevant filenames to process
 all_fnames = sorted(glob(cfg["input_fname_globs"][0])) # 0 means only mecca, not jval
-print('The following files (and the corresponding jval files) will be processed:')
+print('\nThe following files (and the corresponding jval files) will be processed:')
 [print(f'  {f}') for f in all_fnames]
 
 processor_fileindex_samplenumbers = get_processor_fileindex_samplenumbers(
