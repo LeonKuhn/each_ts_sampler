@@ -40,7 +40,7 @@ with the arguments:
 - `-s`: number of samples to draw *per task*
 - `-d`: output subdirectory (within the working directory `work_dir` defined in the toml file)
 - `-o`: (optional) output file name format
-- `-t`: (optional) toml file, defaults to `n=default.toml`"
+- `-t`: (optional) toml file, defaults to `default.toml`"
 
 
 #### 3) Draw marginal samples

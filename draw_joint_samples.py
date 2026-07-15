@@ -152,7 +152,10 @@ cfg["clustering"] = cfg.get("clustering") # set to False if undefined
 # Define output_name based on short version of output_dir:
 cfg["output_name"] = f"{args.output_dir}_{args.processor_index+1:02d}"
 # Now add full path to output_dir:
-cfg["output_dir"] = os.path.join(cfg["work_dir"], "joint_samples", cfg["output_dir"])
+if (cfg["clustering"]):
+    cfg["output_dir"] = os.path.join(cfg["work_dir"], "cluster_samples", cfg["output_dir"])
+else:
+    cfg["output_dir"] = os.path.join(cfg["work_dir"], "joint_samples", cfg["output_dir"])
 os.makedirs(cfg["output_dir"], exist_ok=True)
 
 print('Configuration:')
