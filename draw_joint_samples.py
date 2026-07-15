@@ -214,7 +214,7 @@ for i_file, fname in enumerate(all_fnames):
         ds["time"].attrs.pop("units", None)
 
         # For clustering, a separate file is written for each i_file:
-        savename = os.path.join(cfg["output_dir"], f'{cfg["output_name"]}_{i_file}.nc')
+        savename = os.path.join(cfg["output_dir"], f'{cfg["output_name"]}_{i_file+1:02d}.nc')
         if os.path.exists(savename):
             os.remove(savename)
         print(f"Saving to file {savename}")
