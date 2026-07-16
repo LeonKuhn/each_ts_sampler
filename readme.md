@@ -65,5 +65,5 @@ sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_output
 
 The plot is reproduced by running
 ```
-python paper/draw_marginal_samples_paper.py -t config/default.toml -s 100000 -d paper_hist -p -g NO2_start 
+python paper/draw_marginal_samples_paper.py -s 100000 -d paper_hist -p -g NO2_start 
 ```
