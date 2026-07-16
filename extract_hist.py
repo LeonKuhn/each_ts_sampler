@@ -15,13 +15,13 @@ import xarray as xr
 
 from shared import get_filenames_by_globs, filter_fnames_by_permission, get_var
 
-# parse arguments and namelist
+# parse arguments and toml
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--namelist", type=str, help="namelist file", default="default.nml")
+parser.add_argument("-t", "--toml", type=str, help="toml file", default="default.toml")
 parser.add_argument("-v", "--var", type=str, help="variable to be processed", required=True)
 args = parser.parse_args()
 
-with open(args.namelist, "rb") as f:
+with open(args.toml, "rb") as f:
     toml_cfg = tomli.load(f)
     cfg = {**vars(args), **toml_cfg}
 

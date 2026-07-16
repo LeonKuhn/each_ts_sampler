@@ -6,21 +6,26 @@ These variables are later sampled for the training set assembly.
 
 import xarray as xr
 import argparse
-import tomli
+
+try:
+    import tomllib # python >= 3.11
+except ModuleNotFoundError:
+    import tomli as tomllib # python < 3.11
+
 from glob import glob
 import os
 
-# parse namelist
+# parse toml
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--namelist", default="default.nml", type=str, help="namelist file")
+parser.add_argument("-t", "--toml", default="config/default.toml", type=str, help="toml file")
 args = parser.parse_args()
 
-namelist = args.namelist
+toml = args.toml
 
-print(f"Using namelist: {namelist}")
+print(f"Using toml: {toml}")
 
-with open(args.namelist, "rb") as f:
-    toml_cfg = tomli.load(f)
+with open(args.toml, "rb") as f:
+    toml_cfg = tomllib.load(f)
     cfg = {**vars(args), **toml_cfg}
 
 

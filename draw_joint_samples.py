@@ -3,51 +3,46 @@
 Draws joint samples from a global simulation dataset.
 """
 
+##############################################################################
+# import packages:
+##############################################################################
+
 import uuid
 from pathlib import Path
 
 import argparse
 import logging
-import os
+import os, sys
 import re
 import time
 import random
-import tomli
+
+try:
+    import tomllib # python >= 3.11
+except ModuleNotFoundError:
+    import tomli as tomllib # python < 3.11
+
 from glob import glob
 
 import math
 import numpy as np
 import xarray as xr
+import gc
 
 from shared import get_var, filter_fnames_by_permission, get_filenames_by_globs
 
-# parse arguments and namelist
-parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--namelist", type=str, help="namelist file", default="default.nml")
-parser.add_argument("-s", "--nr_samples", type=int, help="number of total samples to draw", required=True)
-parser.add_argument("-d", "--output_dir", type=str, help="output directory (e.g. 100k)", required=True)
-parser.add_argument("-o", "--output_name", type=str, help="output name, appended to output_dir", default="")
-parser.add_argument("-P", "--number_total_processors", type=int, help="number of total processors", required=True)
-parser.add_argument("-p", "--processor_index", type=int, help="processor index", required=True)
+# import for clustering with hdbscan:
+from hdbscan_clusters import cluster_data_3d, ds_info
 
-args = parser.parse_args()
+##############################################################################
+# functions:
+##############################################################################
 
-if args.output_name=="":
-    args.output_name = args.output_dir + ".nc"
+# Patch for faster runtimes: Not every process needs to open every data
+# file. For example, if we draw 10 × 100.000 samples from 12 files, the
+# first process only needs to access the first two files. The logic for
+# this is implemented here:
 
-with open(args.namelist, "rb") as f:
-    toml_cfg = tomli.load(f)
-    cfg = {**vars(args), **toml_cfg}
-
-
-cfg["output_dir"] = os.path.join(cfg["work_dir"], "joint_samples", cfg["output_dir"])
-os.makedirs(cfg["output_dir"], exist_ok=True)
-
-# get all relevant filenames to process
-all_fnames = sorted(glob(cfg["input_fname_globs"][0]))
-
-# Patch for faster runtimes: Not every process needs to open every data file. For example, if we draw 10 × 100.000 samples from 12 files, the first process only needs to access
-# the first two files. The logic for this is implemented here:
 def get_processor_fileindex_samplenumbers(s, P, F):
     """
     Let s := number of samples to be drawn for each processor (e.g. 100000)
@@ -71,8 +66,8 @@ def get_processor_fileindex_samplenumbers(s, P, F):
 
     for p in range(P):
 
-        d[p] = {}
-        samples_left = s
+        d[p] = {}  # for each processor, begin with an empty dict
+        samples_left = s  # samples this processor still needs to draw: begin with s
         while samples_left > 0:
 
             remaining_in_file = spf - samples_taken_from_files.get(cur_file_idx, 0)
@@ -85,19 +80,14 @@ def get_processor_fileindex_samplenumbers(s, P, F):
             if samples_taken_from_files.get(cur_file_idx, 0) >= spf:
                 cur_file_idx += 1
 
+    # assert total number of samples is correct
     for v in d.values():
         assert sum(v.values()) == s
 
+    print("processor_fileindex_samplenumbers:", d)
     return d
 
-processor_fileindex_samplenumbers = get_processor_fileindex_samplenumbers(args.nr_samples, args.number_total_processors, len(all_fnames))
-
-# read vars.txt
-with open(os.path.join(cfg["work_dir"], "vars.txt"), "r") as file:
-    variables = file.readlines()
-    variables = [v.split("\n")[0] for v in variables]  # \n should also not be parsed
-
-subsets = []  # We are possibly iterating over multiple files to take samples from, here we store the partial results
+##############################################################################
 
 def find_matching_files(filename, method, input_fname_globs):
     """
@@ -137,6 +127,60 @@ def find_matching_files(filename, method, input_fname_globs):
 
     return matching_files
 
+##############################################################################
+
+# print some general info:
+print(f'python version: {sys.version_info}')
+print(f'xarray version: {xr.__version__}')
+print(f'numpy  version: {np.__version__}\n')
+
+# parse arguments and toml
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--toml", type=str, help="toml file", default="config/default.toml")
+parser.add_argument("-s", "--nr_samples", type=int, help="number of total samples to draw", required=True)
+parser.add_argument("-d", "--output_dir", type=str, help="output directory (e.g. 100k)", required=True)
+parser.add_argument("-P", "--number_total_processors", type=int, help="number of total processors", required=True)
+parser.add_argument("-p", "--processor_index", type=int, help="processor index", required=True)
+
+args = parser.parse_args()
+
+with open(args.toml, "rb") as f:
+    cfg = {**vars(args), **tomllib.load(f)}
+
+cfg["clustering"] = cfg.get("clustering") # set to False if undefined
+
+# Define output_name based on short version of output_dir:
+cfg["output_name"] = f"{args.output_dir}_{args.processor_index+1:02d}"
+# Now add full path to output_dir:
+if (cfg["clustering"]):
+    cfg["output_dir"] = os.path.join(cfg["work_dir"], "cluster_samples", cfg["output_dir"])
+else:
+    cfg["output_dir"] = os.path.join(cfg["work_dir"], "joint_samples", cfg["output_dir"])
+os.makedirs(cfg["output_dir"], exist_ok=True)
+
+print('Configuration:')
+for key, value in cfg.items():
+    print(f'{key:26}: {value}')
+
+# get all relevant filenames to process
+all_fnames = sorted(glob(cfg["input_fname_globs"][0])) # 0 means only mecca, not jval
+print('\nThe following files (and the corresponding jval files) will be processed:')
+[print(f'  {f}') for f in all_fnames]
+
+processor_fileindex_samplenumbers = get_processor_fileindex_samplenumbers(
+    args.nr_samples, args.number_total_processors, len(all_fnames))
+
+# read vars.txt
+varsfile = os.path.join(cfg["work_dir"], "vars.txt")
+with open(varsfile, "r") as file:
+    variables = file.readlines()
+    variables = [v.split("\n")[0] for v in variables]  # \n should also not be parsed
+print(f'\nOutput variables in {varsfile}:\n', ', '.join(variables), '\n')
+
+# We are possibly iterating over multiple files to take samples from,
+# here we store the partial results:
+subsets = []
+
 # iterate over the raw files, extract and flatten the requested variables
 i_file_unskipped = 1  # track index of unskipped files (just for logging)
 total_files_to_be_sampled = len(processor_fileindex_samplenumbers[args.processor_index].values())
@@ -148,68 +192,97 @@ for i_file, fname in enumerate(all_fnames):
         continue
 
     fnames = find_matching_files(fname, cfg["file_assoc_method"], cfg["input_fname_globs"])
-    print(f"Opening file '{fname}'")
+    print(f"Opening file '{fname}' (i_file={i_file})")
 
     # Build the full dataset belonging to one file index (i.e. combine trace gases, J-values, etc.)
     ds_list = []
     for f in fnames:
         with xr.open_dataset(f) as partial_ds:
             ds_list.append(partial_ds)
-    ds = xr.merge(ds_list)
+    ds = xr.merge(ds_list, compat='no_conflicts')
+    print('The dataset "ds" now contains the variables from these files:')
+    [print(f'  {f}') for f in fnames]
+    print(f'  {dict(ds.sizes)}')
 
-    # Quick patch to save a lot of memory: We use a variable that is guaranteed in the data (here: O3, is set in config) to determine the shape of the variables
-    # Then we already build the sampling indices. This way, the individual variables can be subsampled while iterating over them.
-    get_var(ds, cfg["test_var_name"], cfg)
-    test_da, _ = get_var(ds, cfg["test_var_name"], cfg)
-    test_shape = test_da.shape
-    test_size = np.prod(test_shape)
-    flat_sampling_indices = np.random.choice(test_size, size=processor_fileindex_samplenumbers[args.processor_index][i_file], replace=False)
+    # ------------------------------------------------------------------------
+    if (cfg["clustering"]):
+        samples_per_file = processor_fileindex_samplenumbers[args.processor_index][i_file]
+        ds = cluster_data_3d(ds, variables, samples_per_file, fname)
+        # Reduce the number of samples to exactly cfg["nr_samples"]?
+        print(f'cfg["nr_samples"] = {cfg["nr_samples"]}; ds.sizes = {ds.sizes}')
+        # ds = ds.isel(sample_nr=range(cfg["nr_samples"]))
+        # When clustering is switched on, data are written to a file for
+        # each fname within the loop over all_fnames:
+        ds = ds.assign_coords(sample_nr=range(ds.sizes["sample_nr"]))
+        ds["time"].attrs.pop("units", None)
 
-    ds_flat = xr.Dataset()
+        # For clustering, a separate file is written for each i_file:
+        savename = os.path.join(cfg["output_dir"], f'{cfg["output_name"]}_{i_file+1:02d}.nc')
+        if os.path.exists(savename):
+            os.remove(savename)
+        print(f"Saving to file {savename}")
+        ds.to_netcdf(savename, unlimited_dims={'sample_nr': True})
 
-    for i_var, var in enumerate(variables, start=1):
+        # cleanup before creating next xarray dataset:
+        del ds
+        gc.collect() # gc = garbage collection
+    # ------------------------------------------------------------------------
+    else:
+        # Quick patch to save a lot of memory: We use a variable that is guaranteed in the data (here: O3, is set in config) to determine the shape of the variables
+        # Then we already build the sampling indices. This way, the individual variables can be subsampled while iterating over them.
+        get_var(ds, cfg["test_var_name"], cfg)
+        test_da, _ = get_var(ds, cfg["test_var_name"], cfg)
+        test_shape = test_da.shape
+        test_size = np.prod(test_shape)
+        flat_sampling_indices = np.random.choice(test_size, size=processor_fileindex_samplenumbers[args.processor_index][i_file], replace=False)
 
-        print(f"[var {i_var}/{len(variables)}] [file {i_file_unskipped}/{total_files_to_be_sampled}] {var}")
+        ds_flat = xr.Dataset()
 
-        # remove suffix as specified in namelist.input
-        var_name_nosuffix = var.split(cfg["remove_suffix"])[0]
-        da, units = get_var(ds, var, cfg)
-        units = "" if units is None else units
+        for i_var, var in enumerate(variables, start=1):
 
-        # flatten
-        #da = da.data.flatten()  # todo this can lead to wrong order, can be removed if da.stack below works
-        da = da.stack(sample=("time", "eta", "lat", "lon"))
-        da = xr.DataArray(da, dims=("sample_nr",), coords={"sample_nr": np.arange(da.shape[0])})
-        da = da.isel(sample_nr=flat_sampling_indices)
+            print(f"[var {i_var}/{len(variables)}] [file {i_file_unskipped}/{total_files_to_be_sampled}] {var}")
+            # remove suffix as specified in toml file:
+            var_name_nosuffix = var.split(cfg["remove_suffix"])[0]
+            da, units = get_var(ds, var, cfg)
+            units = "" if units is None else units
 
-        ds_flat[var_name_nosuffix] = da
-        ds_flat[var_name_nosuffix].attrs["units"] = units
+            # flatten
+            #da = da.data.flatten()  # todo this can lead to wrong order, can be removed if da.stack below works
+            da = da.stack(sample=("time", "eta", "lat", "lon"))
+            da = xr.DataArray(da, dims=("sample_nr",), coords={"sample_nr": np.arange(da.shape[0])})
+            da = da.isel(sample_nr=flat_sampling_indices)
 
-    # now we have a flat dataset with all requested variables → draw random samples
-    ds_flat = ds_flat.isel(sample_nr=np.random.choice(ds_flat.sample_nr.size, size=processor_fileindex_samplenumbers[args.processor_index][i_file], replace=False))
+            ds_flat[var_name_nosuffix] = da
+            ds_flat[var_name_nosuffix].attrs["units"] = units
 
-    # remove all-zero variables
-    all_zero_vars = [name for name, da in ds_flat.data_vars.items() if (da.max() == 0 and da.min() == 0).all()]
-    ds_flat_cleaned = ds_flat.drop_vars(all_zero_vars)
+        # now we have a flat dataset with all requested variables → draw random samples
+        ds_flat = ds_flat.isel(sample_nr=np.random.choice(
+            ds_flat.sample_nr.size, size=processor_fileindex_samplenumbers[args.processor_index][i_file], replace=False))
 
-    # print info:
-    print(f"Dropped following variables because they are all-zero (total: {len(all_zero_vars)}):")
-    for var in all_zero_vars:
-        print(f"{var}")
+        # remove all-zero variables
+        all_zero_vars = [name for name, da in ds_flat.data_vars.items() if (da.max() == 0 and da.min() == 0).all()]
+        ds_flat_cleaned = ds_flat.drop_vars(all_zero_vars)
 
-    subsets.append(ds_flat_cleaned)
-    i_file_unskipped += 1
+        # print info:
+        print(f"Dropped following variables because they are all-zero (total: {len(all_zero_vars)}):")
+        for var in all_zero_vars:
+            print(f"{var}")
 
-ds = xr.concat(subsets, dim="sample_nr")
-ds = ds.isel(sample_nr=range(cfg["nr_samples"]))
-ds = ds.assign_coords(sample_nr=range(ds.sizes["sample_nr"]))
-ds["time"].attrs.pop("units", None)
+        subsets.append(ds_flat_cleaned)
+        i_file_unskipped += 1
+    # ------------------------------------------------------------------------
 
-savename = os.path.join(cfg["output_dir"], Path(cfg['output_name']).stem + ".nc")
+# When clustering is switched off, data from all files (all_fnames) are
+# collected in the subsets list and written to a file after the loop:
+if (not cfg["clustering"]):
+    ds = xr.concat(subsets, dim="sample_nr")
+    ds = ds.isel(sample_nr=range(cfg["nr_samples"]))
+    ds = ds.assign_coords(sample_nr=range(ds.sizes["sample_nr"]))
+    ds["time"].attrs.pop("units", None)
 
-# apparently the output file must be deleted, if it already exists under the same name; else there might be Error 13s (permission denied)
-if os.path.exists(savename):
-    os.remove(savename)
-
-print(f"Saving to file {savename}")
-ds.to_netcdf(savename, unlimited_dims={'sample_nr': True})
+    savename = os.path.join(cfg["output_dir"], cfg["output_name"]+".nc")
+    # apparently the output file must be deleted, if it already exists under the same name; else there might be Error 13s (permission denied)
+    if os.path.exists(savename):
+        os.remove(savename)
+    print(f"Saving to file {savename}")
+    ds.to_netcdf(savename, unlimited_dims={'sample_nr': True})

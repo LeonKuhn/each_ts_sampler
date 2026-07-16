@@ -1,0 +1,31 @@
+# general
+input_fname_globs = [
+    "/work/mm0062/b302052/MOM/EXP/MOM-EACH.2r/data/EACH/MOM-EACH.2r*mecca_gp.nc",
+    "/work/mm0062/b302052/MOM/EXP/MOM-EACH.2r/data/EACH/MOM-EACH.2r*jval_gp.nc"
+]
+#    "../input/MOM-EACH.2r__2010*_mecca_gp-RS2.nc",
+#    "../input/MOM-EACH.2r__2010*_jval_gp-RS2.nc"
+work_dir = "./output"
+
+# get_var_list.py
+fixed_vars = ["tm1", "p", "lat", "lon", "time"]
+accepted_units = ["mol/mol", "molec/cm3", "1/s"]
+blacklist = ["LRO2", "LROOH", "cair", "J_not in use"]
+
+# draw joint samples
+file_assoc_method = "global_mecca_r2"
+
+# for extracting hists
+#qqq out_format_gases = "vmr"  # "vmr" or "conc"
+#qqq cair_variable_name = "cair"
+n_bins = 250
+ignore_vars = ["lat", "lon", "time"]
+
+# draw marignal samples
+remove_suffix = "_start"
+
+# random_seed
+random_seed = 42
+
+# clustering
+clustering = true # must be lowercase true for toml, not True

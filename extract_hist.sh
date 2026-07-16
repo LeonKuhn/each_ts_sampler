@@ -14,18 +14,18 @@
 # number of workers (must match array size)
 NWORKERS=20
 
-# default namelist
-namelist="default.nml"
+# default toml
+toml="config/default.toml"
 
-while getopts ":n:" opt; do
+while getopts ":t:" opt; do
   case $opt in
-    n) namelist="$OPTARG" ;;
+    t) toml="$OPTARG" ;;
     *) exit 1 ;;
   esac
 done
 
 # parse config
-work_dir=$(sed -n 's/^work_dir *= *"\([^"]*\)".*/\1/p' "$namelist")
+work_dir=$(sed -n 's/^work_dir *= *"\([^"]*\)".*/\1/p' "$toml")
 var_file="${work_dir}/vars.txt"
 
 TASK_ID=$SLURM_ARRAY_TASK_ID
@@ -38,5 +38,5 @@ NLINES=$(wc -l < "$var_file")
 for ((i=TASK_ID+1; i<=NLINES; i+=NWORKERS)); do
     var=$(sed -n "${i}p" "$var_file")
     echo "Worker $TASK_ID processing: $var"
-    python -u extract_hist.py -n "$namelist" -v "$var"
+    python -u extract_hist.py -t "$toml" -v "$var"
 done

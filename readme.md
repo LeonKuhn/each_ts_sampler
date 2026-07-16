@@ -1,10 +1,10 @@
-Check the pre-supplied namelist file (`MOM-ML4GPK.2r_conc.nml`) and see if it matches your needs. The meaning of the configuration
+Check the pre-supplied toml file (`MOM-ML4GPK.2r_conc.toml`) and see if it matches your needs. The meaning of the configuration
 keys is given below.
 
-`each_ts_sampler` expects a default namelist (`default.nml`), which can be created e.g. through a soft link:
+`each_ts_sampler` expects a default toml (`default.toml`), which can be created e.g. through a soft link:
 ```
 cd config
-ln -sf MOM-ML4GPK.2r_conc.nml default.nml
+ln -sf MOM-ML4GPK.2r_conc.toml default.toml
 ```
 
 Relevant config keys:
@@ -33,14 +33,13 @@ random indices.
 Joint sampling is executed via slurm job arrays:
 
 ```
-sbatch --array=0-11 draw_joint_samples.sh -s 1000000 -d 12m_output -o 12m.nc
+sbatch --array=0-11 draw_joint_samples.sh -s 1000000 -d 12m_output
 ```
 
 with the arguments:
 - `-s`: number of samples to draw *per task*
-- `-d`: output subdirectory (within the working directory `work_dir` defined in the namelist file)
-- `-o`: (optional) output file name format
-- `n`: (optional) namelist file, defaults to `n=default.nml`"
+- `-d`: output subdirectory (within the working directory `work_dir` defined in the toml file)
+- `-t`: (optional) toml file, defaults to `config/default.toml`"
 
 
 #### 3) Draw marginal samples
@@ -58,12 +57,13 @@ sbatch extract_hist.sh
 
 Afterwards, run
 ```
-sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_output -o 12m.nc
+sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_output
+
 ```
 
 #### 4) Reproducing paper plot of marginal histograms
 
 The plot is reproduced by running
 ```
-python paper/draw_marginal_samples_paper.py -n config/default.nml -s 100000 -d paper_hist -p -g NO2_start 
+python paper/draw_marginal_samples_paper.py -s 100000 -d paper_hist -p -g NO2_start 
 ```

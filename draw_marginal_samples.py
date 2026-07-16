@@ -16,21 +16,21 @@ import xarray as xr
 import numpy as np
 from scipy.interpolate import interp1d
 
-# parse arguments and namelist
+# parse arguments and toml
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--namelist", type=str, help="namelist file", default="default.nml")
+parser.add_argument("-t", "--toml", type=str, help="toml file", default="config/default.toml")
 parser.add_argument("-s", "--nr_samples", type=int, help="number of samples to draw", required=True)
 parser.add_argument("-d", "--output_dir", type=str, help="output directory (e.g. 100k)", required=True)
 parser.add_argument("-o", "--output_name", type=str, help="output name, appended to output_dir", default="")
 parser.add_argument("-p", "--draw_plots", help="whether to draw histogram plots", default=False, action="store_true")
-parser.add_argument("-t", "--sampling_strategy", type=str, help="which sampling strategy to use", default="reproduce_hist")
+parser.add_argument("-r", "--sampling_strategy", type=str, help="which sampling strategy to use", default="reproduce_hist")
 parser.add_argument("-g", "--gas", type=str, help="if only a single gas is requested ('all' will draw all gases)", default="all")
 args = parser.parse_args()
 
 if args.output_name == "":
     args.output_name = args.output_dir + ".nc"
 
-with open(args.namelist, "rb") as f:
+with open(args.toml, "rb") as f:
     toml_cfg = tomli.load(f)
     cfg = {**vars(args), **toml_cfg}
 
@@ -95,7 +95,7 @@ def draw_uniform(hist, low_func, high_func, size):
 
     return uniform_samples
 
-# here, we define multiple sample strategies, that can be selected in the .nml file
+# here, we define multiple sample strategies, that can be selected in the .toml file
 sample_strategies = {
     "reproduce_hist": draw_from_hist,
     "min_max": partial(draw_uniform, low_func=lambda x: np.min(x), high_func=lambda x: np.max(x)),
@@ -172,7 +172,7 @@ def save_results(savename, arr, variable_names, variable_units):
         var_unit = variable_units[col_idx]
         var_arr = arr[:, col_idx]
 
-        # remove suffixes as specified in namelist.input
+        # remove suffix as specified in toml file:
         var_name = var_name.split(remove_suffix)[0]
 
         da = xr.DataArray(var_arr, coords={'sample_nr': range(arr.shape[0])}, dims=['sample_nr'], name=var_name, attrs={"units": var_unit})

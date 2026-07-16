@@ -21,7 +21,7 @@ def filter_fnames_by_permission(fnames):
 
     return fnames_with_permissions
 
-def get_var(ds, var, cfg):
+def get_var(ds, var, cfg=None):
     """
     read a variable from an xarray dataset.
     - Some variables (like 'p' in the MECCA/CAABA simulations) are only implicitly contained through hybrid pressure coordinates. These can be reconstructed using lambda functions.
@@ -83,7 +83,8 @@ def get_var(ds, var, cfg):
                     raise Exception("Invalid parameter 'out_format_gases'")
 
     else:  # case 2: var cannot be returned
-        raise KeyError(f"Variable '{var}' is not contained in '{ds.encoding["source"]}' and has no recipe for reconstruction from other variables")
+        ds_encoding_source = ds.encoding["source"]
+        raise KeyError(f"Variable '{var}' is not contained in '{ds_encoding_source}' and has no recipe for reconstruction from other variables")
 
     return da, units
 

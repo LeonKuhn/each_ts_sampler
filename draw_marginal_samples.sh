@@ -11,18 +11,17 @@
 #SBATCH --cpus-per-task=1
 
 # parse arguments:
-while getopts ":n:s:d:o:" opt; do
+while getopts ":t:s:d:" opt; do
   case $opt in
-    n) NAMELIST="$OPTARG" ;;
+    t) TOML="$OPTARG" ;;
     s) N_SAMPLES="$OPTARG" ;;
     d) OUTPUT_DIR="$OPTARG" ;;
-    o) OUTPUT_FILENAME="$OPTARG" ;;
     *) exit 1 ;;
   esac
 done
 
 # strip the ".nc" extension and append array ID
-BASENAME="${OUTPUT_FILENAME%.nc}"
+BASENAME="${OUTPUT_DIR%.nc}"
 OUTPUT_FILENAME_FINAL="${BASENAME}_${SLURM_ARRAY_TASK_ID}.nc"
 
 # construct command
@@ -31,7 +30,7 @@ CMD=(python -u draw_marginal_samples.py
      -d "$OUTPUT_DIR"
      -o "$OUTPUT_FILENAME_FINAL")
 
-[ -n "$NAMELIST" ] && CMD+=(-n "$NAMELIST")
+[ -n "$TOML" ] && CMD+=(-t "$TOML")
 
 echo "Running command:" "${CMD[@]}"
 "${CMD[@]}"
