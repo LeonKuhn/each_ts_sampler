@@ -17,7 +17,7 @@ import os
 
 # parse toml
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--toml", default="default.toml", type=str, help="toml file")
+parser.add_argument("-t", "--toml", default="config/default.toml", type=str, help="toml file")
 args = parser.parse_args()
 
 toml = args.toml

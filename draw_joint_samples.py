@@ -136,7 +136,7 @@ print(f'numpy  version: {np.__version__}\n')
 
 # parse arguments and toml
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--toml", type=str, help="toml file", default="default.toml")
+parser.add_argument("-t", "--toml", type=str, help="toml file", default="config/default.toml")
 parser.add_argument("-s", "--nr_samples", type=int, help="number of total samples to draw", required=True)
 parser.add_argument("-d", "--output_dir", type=str, help="output directory (e.g. 100k)", required=True)
 parser.add_argument("-P", "--number_total_processors", type=int, help="number of total processors", required=True)

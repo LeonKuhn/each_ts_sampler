@@ -15,7 +15,7 @@
 NWORKERS=20
 
 # default toml
-toml="default.toml"
+toml="config/default.toml"
 
 while getopts ":t:" opt; do
   case $opt in

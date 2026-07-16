@@ -33,14 +33,13 @@ random indices.
 Joint sampling is executed via slurm job arrays:
 
 ```
-sbatch --array=0-11 draw_joint_samples.sh -s 1000000 -d 12m_output -o 12m.nc
+sbatch --array=0-11 draw_joint_samples.sh -s 1000000 -d 12m_output
 ```
 
 with the arguments:
 - `-s`: number of samples to draw *per task*
 - `-d`: output subdirectory (within the working directory `work_dir` defined in the toml file)
-- `-o`: (optional) output file name format
-- `-t`: (optional) toml file, defaults to `default.toml`"
+- `-t`: (optional) toml file, defaults to `config/default.toml`"
 
 
 #### 3) Draw marginal samples
@@ -58,7 +57,8 @@ sbatch extract_hist.sh
 
 Afterwards, run
 ```
-sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_output -o 12m.nc
+sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_output
+
 ```
 
 #### 4) Reproducing paper plot of marginal histograms

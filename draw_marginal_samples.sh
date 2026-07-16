@@ -11,18 +11,17 @@
 #SBATCH --cpus-per-task=1
 
 # parse arguments:
-while getopts ":t:s:d:o:" opt; do
+while getopts ":t:s:d:" opt; do
   case $opt in
     t) TOML="$OPTARG" ;;
     s) N_SAMPLES="$OPTARG" ;;
     d) OUTPUT_DIR="$OPTARG" ;;
-    o) OUTPUT_FILENAME="$OPTARG" ;;
     *) exit 1 ;;
   esac
 done
 
 # strip the ".nc" extension and append array ID
-BASENAME="${OUTPUT_FILENAME%.nc}"
+BASENAME="${OUTPUT_DIR%.nc}"
 OUTPUT_FILENAME_FINAL="${BASENAME}_${SLURM_ARRAY_TASK_ID}.nc"
 
 # construct command

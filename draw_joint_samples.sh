@@ -12,7 +12,7 @@
 #SBATCH --cpus-per-task=1
 
 # parse arguments:
-while getopts ":t:s:d:o:" opt; do
+while getopts ":t:s:d:" opt; do
   case $opt in
     t) TOML="$OPTARG" ;;
     s) N_SAMPLES="$OPTARG" ;;
