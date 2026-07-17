@@ -18,12 +18,12 @@ from scipy.interpolate import interp1d
 
 # parse arguments and toml
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--toml", type=str, help="toml file", default="default.toml")
+parser.add_argument("-t", "--toml", type=str, help="toml file", default="config/default.toml")
 parser.add_argument("-s", "--nr_samples", type=int, help="number of samples to draw", required=True)
 parser.add_argument("-d", "--output_dir", type=str, help="output directory (e.g. 100k)", required=True)
 parser.add_argument("-o", "--output_name", type=str, help="output name, appended to output_dir", default="")
 parser.add_argument("-p", "--draw_plots", help="whether to draw histogram plots", default=False, action="store_true")
-parser.add_argument("-t", "--sampling_strategy", type=str, help="which sampling strategy to use", default="reproduce_hist")
+parser.add_argument("-r", "--sampling_strategy", type=str, help="which sampling strategy to use", default="reproduce_hist")
 parser.add_argument("-g", "--gas", type=str, help="if only a single gas is requested ('all' will draw all gases)", default="all")
 args = parser.parse_args()
 
