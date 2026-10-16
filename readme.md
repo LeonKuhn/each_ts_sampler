@@ -58,7 +58,6 @@ sbatch extract_hist.sh
 Afterwards, run
 ```
 sbatch --array=0-11 draw_marginal_samples.sh -s 1000000 -d 12m_output
-
 ```
 
 #### 4) Reproducing paper plot of marginal histograms
