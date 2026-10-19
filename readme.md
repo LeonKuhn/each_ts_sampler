@@ -8,6 +8,8 @@ A list of dependencies is given in `env.yml`, which can be used to install a sui
 conda env create -f env.yml
 ```
 
+The standard environment name is `each_ts_sampler` – If you wish to use a differently named environment on an HPC machine using `slurm`, ensure to activate your corresponding `draw_joint_samples.sh` and `draw_marginal_samples.sh` instead of `each_ts_sampler`.
+
 ## Usage
 
 Check the pre-supplied toml file (`MOM-ML4GPK.2r_conc.toml`) and see if it matches your needs. The meaning of the configuration
