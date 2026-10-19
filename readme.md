@@ -3,7 +3,10 @@ This is a the repository for the sampling routine from MOM simulation data used 
 For context, please refer to our ESSD publication: <Todo: add link to paper>
 
 ## Requirements
-<Todo: add requirements>
+A list of dependencies is given in `env.yml`, which can be used to install a suitable environment via `conda` through
+```
+conda env create -f env.yml
+```
 
 ## Usage
 
