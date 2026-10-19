@@ -1,3 +1,7 @@
+## About `each_ts_sampler`
+This is a the repository for the sampling routine from MOM simulation data used within the EACH project.
+For context, please refer to our ESSD publication: <Todo: add link to paper>
+
 Check the pre-supplied toml file (`MOM-ML4GPK.2r_conc.toml`) and see if it matches your needs. The meaning of the configuration
 keys is given below.
 
