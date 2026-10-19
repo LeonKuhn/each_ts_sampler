@@ -21,6 +21,8 @@ while getopts ":t:s:d:" opt; do
   esac
 done
 
+conda activate each_ts_sampler  # ← change to environment name of your choice
+
 # construct command
 CMD=(python -u draw_joint_samples.py
      -s "$N_SAMPLES"
