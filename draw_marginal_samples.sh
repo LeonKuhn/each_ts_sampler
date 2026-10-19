@@ -24,8 +24,6 @@ done
 BASENAME="${OUTPUT_DIR%.nc}"
 OUTPUT_FILENAME_FINAL="${BASENAME}_${SLURM_ARRAY_TASK_ID}.nc"
 
-conda activate each_ts_sampler  # ← change to environment name of your choice
-
 # construct command
 CMD=(python -u draw_marginal_samples.py
      -s "$N_SAMPLES"
