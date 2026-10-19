@@ -206,18 +206,18 @@ for i_file, fname in enumerate(all_fnames):
 
     # ------------------------------------------------------------------------
     if (cfg["clustering"]):
+        print(f'cfg["output_dir"]    = {cfg["output_dir"]}')
+        print(f'cfg["output_name"]   = {cfg["output_name"]}')
+        print(f'i_file               = {i_file}')
         samples_per_file = processor_fileindex_samplenumbers[args.processor_index][i_file]
         ds = cluster_data_3d(ds, variables, samples_per_file, fname)
         # Reduce the number of samples to exactly cfg["nr_samples"]?
         print(f'cfg["nr_samples"] = {cfg["nr_samples"]}; ds.sizes = {ds.sizes}')
         # ds = ds.isel(sample_nr=range(cfg["nr_samples"]))
-        # When clustering is switched on, data are written to a file for
-        # each fname within the loop over all_fnames:
         ds = ds.assign_coords(sample_nr=range(ds.sizes["sample_nr"]))
         ds["time"].attrs.pop("units", None)
-
-        # For clustering, a separate file is written for each i_file:
-        savename = os.path.join(cfg["output_dir"], f'{cfg["output_name"]}_{i_file+1:02d}.nc')
+        savename = os.path.join(cfg["output_dir"], f'{Path(cfg["output_name"]).stem}.nc')
+        print(f'Output nc file will be: {savename}')
         if os.path.exists(savename):
             os.remove(savename)
         print(f"Saving to file {savename}")

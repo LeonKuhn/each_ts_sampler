@@ -2,5 +2,6 @@ __pycache__
 logs
 slurm_logs
 MOM-ML4GPK.2r_conc/
+clusters-*.pdf
 
 *~

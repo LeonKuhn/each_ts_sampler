@@ -32,6 +32,7 @@ from math import log, log10, exp
 #qqq from icecream import ic as qqq ; qqq.configureOutput(prefix='qqq ', includeContext=True)
 from textwrap import fill
 from datetime import datetime
+from copy import deepcopy
 
 # For plot_emac:
 from matplotlib.backends.backend_pdf import PdfPages
@@ -201,7 +202,9 @@ def cluster_data_3d(ds_allvar, variables, samples_per_file, fname):
                 ds_subset_flat = ds_subset.stack(location=('lat', 'lon'))
                 if VERBOSE: print(ds_info(ds_subset_flat))
                 # Prepare data:
-                da = prepare_data_for_clustering(ds_subset_flat[SPECIES])
+                # Make a deep copy to avoid that ds_subset_flat is changed:
+                ds_subset_flat_SPECIES = deepcopy(ds_subset_flat[SPECIES])
+                da = prepare_data_for_clustering(ds_subset_flat_SPECIES)
                 if VERBOSE: print(ds_info(da))
                 # Cluster the data and produce random indices, weighted by cluster sizes:
                 clstrsizes_1d, selected_1d, selected_idx, infodict = cluster_data(
