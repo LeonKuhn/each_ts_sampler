@@ -6,7 +6,7 @@ For context, please refer to our ESSD publication: <Todo: add link to paper>
 Copyright (C) 2026 Leon Kuhn
 
 This project is licensed under the GNU General Public
-License v3.0. See the LICENSE file for details.
+License v3.0. See the `LICENSE.md` file for details.
 
 ## Requirements
 A list of dependencies is given in `env.yml`, which can be used to install a suitable environment via `conda` through
